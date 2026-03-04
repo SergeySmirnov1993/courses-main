@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: courses_db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-courses_db}
+      POSTGRES_USER: ${POSTGRES_USER:-courses_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-courses_password}
+    ports:
+      - ${POSTGRES_PORT:-5432}:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  web:
+    build: .
+    container_name: courses_web
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_DB: ${POSTGRES_DB:-courses_db}
+      POSTGRES_USER: ${POSTGRES_USER:-courses_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-courses_password}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django-insecure-b42s@jkx=$e37aob!4#ufl&5mz^c($4s@uazokqw1rm3&0bg58}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-True}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0}
+      DJANGO_CSRF_TRUSTED_ORIGINS: ${DJANGO_CSRF_TRUSTED_ORIGINS:-http://localhost:8000,http://127.0.0.1:8000,http://0.0.0.0:8000}
+    ports:
+      - ${WEB_PORT:-8000}:8000
+    volumes:
+      - media_files:/app/media
+      - static_files:/app/staticfiles
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  media_files:
+  static_files:
