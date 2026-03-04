@@ -1,9 +1,8 @@
-from django.shortcuts import render, redirect
-from courses import models
-from courses import forms
-from django.views.decorators.http import require_POST, require_GET, require_http_methods
 from django.core.paginator import Paginator
+from django.shortcuts import redirect, render
+from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
+from courses import forms, models
 # Отправка сигнала (например, в views.py)
 from courses.signals.custom_signals import course_published
 

@@ -1,12 +1,14 @@
-from django.core.management.base import BaseCommand
-from django.conf import settings
-from django.utils.text import slugify
-from courses import models
-from faker import Faker
-from django_seed import Seed
 import random
 import shutil
 from pathlib import Path
+
+from django.conf import settings
+from django.core.management.base import BaseCommand
+from django.utils.text import slugify
+from django_seed import Seed
+from faker import Faker
+
+from courses import models
 
 
 class Command(BaseCommand):

@@ -1,5 +1,6 @@
 # courses/signals.py
 from django.dispatch import Signal, receiver
+
 from courses import models
 
 # Создаем пользовательский сигнал

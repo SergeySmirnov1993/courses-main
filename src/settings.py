@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 
+
 def _env(key: str, default: str = "") -> str:
     return os.environ.get(key, default)
 
