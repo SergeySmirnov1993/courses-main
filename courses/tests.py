@@ -9,7 +9,9 @@ class CourseModelTest(TestCase):
     """Тесты модели Course."""
 
     def test_create_course(self):
-        course = Course.objects.create(title="Test Course", description="Test description")
+        course = Course.objects.create(
+            title="Test Course", description="Test description"
+        )
         self.assertEqual(course.title, "Test Course")
         self.assertEqual(course.description, "Test description")
         self.assertEqual(str(course), "Test Course")
@@ -27,7 +29,9 @@ class CoursePartModelTest(TestCase):
         self.course = Course.objects.create(title="Parent Course", description="")
 
     def test_create_part(self):
-        part = CoursePart.objects.create(course=self.course, title="Part 1", description="Part desc")
+        part = CoursePart.objects.create(
+            course=self.course, title="Part 1", description="Part desc"
+        )
         self.assertEqual(part.course, self.course)
         self.assertEqual(part.title, "Part 1")
         self.assertIn(part, self.course.parts.all())
@@ -71,7 +75,9 @@ class CourseDetailsViewTest(TestCase):
     """Тесты детальной страницы курса."""
 
     def setUp(self):
-        self.course = Course.objects.create(title="Detail Course", description="Detail desc")
+        self.course = Course.objects.create(
+            title="Detail Course", description="Detail desc"
+        )
 
     def test_course_details(self):
         response = self.client.get(reverse("course-details", args=[self.course.id]))

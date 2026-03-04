@@ -1,76 +1,78 @@
+{% extends "base.html" %}
+
 {% block title %}Course Details{% endblock %}
 
 {% block content %}
-    <h1>{{ course.title }}</h1>
-    <p>{{ course.description }}</p>
-
-    <div>
-        <a href="{% url 'update-course' course.id %}">Редактировать курс</a> |
-        <a href="{% url 'create-course-part' course.id %}">Добавить часть</a> |
-        <form method="post" action="{% url 'delete-course' course.id %}" style="display: inline;">
-            {% csrf_token %}
-            <input type="submit" value="Удалить курс" onclick="return confirm('Вы уверены?');">
-        </form> |
-        <a href="{% url 'courses' %}">Назад к курсам</a>
+    <div class="page-header">
+        <h1>{{ course.title }}</h1>
+        <div class="btn-group">
+            <a href="{% url 'courses' %}" class="btn btn--secondary">Назад к курсам</a>
+            <a href="{% url 'update-course' course.id %}" class="btn btn--primary">Редактировать</a>
+            <a href="{% url 'create-course-part' course.id %}" class="btn btn--primary">Добавить часть</a>
+            <form method="post" action="{% url 'delete-course' course.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn--danger" onclick="return confirm('Вы уверены?');">Удалить курс</button>
+            </form>
+        </div>
     </div>
 
+    {% if course.description %}<p class="text-muted">{{ course.description }}</p>{% endif %}
+
     <h2>Части курса</h2>
-    {% if course.parts.all %}
-        <ul>
-            {% for part in course.parts.all %}
-                <li>
-                    <strong>{{ part.title }}</strong>
-                    {% if part.description %}
-                        <p>{{ part.description }}</p>
-                    {% endif %}
-                    <div>
-                        <a href="{% url 'update-course-part' course.id part.id %}">[Редактировать]</a> |
-                        <form method="post" action="{% url 'delete-course-part' course.id part.id %}" style="display: inline;">
-                            {% csrf_token %}
-                            <button type="submit" onclick="return confirm('Вы уверены, что хотите удалить эту часть?');" style="background: none; border: none; color: red; text-decoration: underline; cursor: pointer; padding: 0;">[Удалить]</button>
-                        </form> |
-                        <a href="{% url 'create-course-topic' course.id part.id %}">[Добавить тему]</a>
-                    </div>
-                    <ul>
-                        {% for topic in part.topics.all %}
-                            <li>
-                                <strong>{{ topic.title }}</strong>
-                                {% if topic.description %}
-                                    <p>{{ topic.description }}</p>
-                                {% endif %}
-                                <div>
-                                    <a href="{% url 'update-course-topic' course.id part.id topic.id %}">[Редактировать]</a> |
-                                    <form method="post" action="{% url 'delete-course-topic' course.id part.id topic.id %}" style="display: inline;">
-                                        {% csrf_token %}
-                                        <button type="submit" onclick="return confirm('Вы уверены, что хотите удалить эту тему?');" style="background: none; border: none; color: red; text-decoration: underline; cursor: pointer; padding: 0;">[Удалить]</button>
-                                    </form> |
-                                    <a href="{% url 'create-topic-document' course.id part.id topic.id %}">[Загрузить документ]</a>
-                                </div>
-                                <ul>
-                                    {% for document in topic.documents.all %}
-                                        <li>
-                                            <a href="{{ document.file.url }}" target="_blank">{{ document.name }}</a>
-                                            <div>
-                                                <a href="{% url 'update-topic-document' course.id part.id topic.id document.id %}">[Редактировать]</a> |
-                                                <form method="post" action="{% url 'delete-topic-document' course.id part.id topic.id document.id %}" style="display: inline;">
-                                                    {% csrf_token %}
-                                                    <button type="submit" onclick="return confirm('Вы уверены, что хотите удалить этот документ?');" style="background: none; border: none; color: red; text-decoration: underline; cursor: pointer; padding: 0;">[Удалить]</button>
-                                                </form>
-                                            </div>
-                                        </li>
-                                    {% empty %}
-                                        <li><em>Нет документов</em></li>
-                                    {% endfor %}
-                                </ul>
-                            </li>
-                        {% empty %}
-                            <li><em>Нет тем</em></li>
-                        {% endfor %}
-                    </ul>
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p><em>Нет частей. <a href="{% url 'create-course-part' course.id %}">Добавить часть</a></em></p>
-    {% endif %}
+    <div class="course-details">
+        {% if course.parts.all %}
+            <ul>
+                {% for part in course.parts.all %}
+                    <li class="part-item">
+                        <strong>{{ part.title }}</strong>
+                        {% if part.description %}<p>{{ part.description }}</p>{% endif %}
+                        <div class="btn-group">
+                            <a href="{% url 'update-course-part' course.id part.id %}" class="btn btn--link">Редактировать</a>
+                            <form method="post" action="{% url 'delete-course-part' course.id part.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn--link" style="color: var(--color-danger);" onclick="return confirm('Удалить эту часть?');">Удалить</button>
+                            </form>
+                            <a href="{% url 'create-course-topic' course.id part.id %}" class="btn btn--link">Добавить тему</a>
+                        </div>
+                        <ul>
+                            {% for topic in part.topics.all %}
+                                <li class="topic-item">
+                                    <strong>{{ topic.title }}</strong>
+                                    {% if topic.description %}<p>{{ topic.description }}</p>{% endif %}
+                                    <div class="btn-group">
+                                        <a href="{% url 'update-course-topic' course.id part.id topic.id %}" class="btn btn--link">Редактировать</a>
+                                        <form method="post" action="{% url 'delete-course-topic' course.id part.id topic.id %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn--link" style="color: var(--color-danger);" onclick="return confirm('Удалить эту тему?');">Удалить</button>
+                                        </form>
+                                        <a href="{% url 'create-topic-document' course.id part.id topic.id %}" class="btn btn--link">Загрузить документ</a>
+                                    </div>
+                                    <ul>
+                                        {% for document in topic.documents.all %}
+                                            <li class="document-item">
+                                                <a href="{{ document.file.url }}" target="_blank">{{ document.name }}</a>
+                                                <div class="btn-group">
+                                                    <a href="{% url 'update-topic-document' course.id part.id topic.id document.id %}" class="btn btn--link">Редактировать</a>
+                                                    <form method="post" action="{% url 'delete-topic-document' course.id part.id topic.id document.id %}">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn--link" style="color: var(--color-danger);" onclick="return confirm('Удалить этот документ?');">Удалить</button>
+                                                    </form>
+                                                </div>
+                                            </li>
+                                        {% empty %}
+                                            <li class="empty-msg">Нет документов</li>
+                                        {% endfor %}
+                                    </ul>
+                                </li>
+                            {% empty %}
+                                <li class="empty-msg">Нет тем</li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="empty-msg">Нет частей. <a href="{% url 'create-course-part' course.id %}">Добавить часть</a></p>
+        {% endif %}
+    </div>
 {% endblock %}

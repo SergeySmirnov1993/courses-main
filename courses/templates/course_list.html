@@ -3,14 +3,19 @@
 {% block title %}Courses{% endblock %}
 
 {% block content %}
-    <a href="{% url 'create-course' %}">Create Course</a>
-    <br />
-    {% for course in page_obj %}
-    <a href="{% url 'course-details' course.id %}">{{ course }}</a>
-    <p>{{ course.description }}</p>
-    <br />
-    {% endfor %}
+    <div class="page-header">
+        <h1>Курсы</h1>
+        <a href="{% url 'create-course' %}" class="btn btn--primary">Создать курс</a>
+    </div>
+
+    <ul class="course-list">
+        {% for course in page_obj %}
+        <li class="course-list__item">
+            <a href="{% url 'course-details' course.id %}" class="course-list__link">{{ course.title }}</a>
+            {% if course.description %}<p>{{ course.description }}</p>{% endif %}
+        </li>
+        {% endfor %}
+    </ul>
 
     {% include 'pagination.html' with page_obj=page_obj %}
-
 {% endblock %}
