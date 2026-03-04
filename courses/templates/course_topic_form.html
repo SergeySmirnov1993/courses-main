@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}{% if is_edit %}Редактировать тему курса{% else %}Создать тему курса{% endif %}{% endblock %}
+
+{% block content %}
+    <h1>{% if is_edit %}Редактировать тему курса{% else %}Создать тему курса{% endif %}</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Сохранить</button>
+        <a href="{% url 'course-details' course_id %}">Отмена</a>
+    </form>
+{% endblock %}
+

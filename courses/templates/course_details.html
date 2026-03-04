@@ -1,0 +1,76 @@
+{% block title %}Course Details{% endblock %}
+
+{% block content %}
+    <h1>{{ course.title }}</h1>
+    <p>{{ course.description }}</p>
+
+    <div>
+        <a href="{% url 'update-course' course.id %}">Редактировать курс</a> |
+        <a href="{% url 'create-course-part' course.id %}">Добавить часть</a> |
+        <form method="post" action="{% url 'delete-course' course.id %}" style="display: inline;">
+            {% csrf_token %}
+            <input type="submit" value="Удалить курс" onclick="return confirm('Вы уверены?');">
+        </form> |
+        <a href="{% url 'courses' %}">Назад к курсам</a>
+    </div>
+
+    <h2>Части курса</h2>
+    {% if course.parts.all %}
+        <ul>
+            {% for part in course.parts.all %}
+                <li>
+                    <strong>{{ part.title }}</strong>
+                    {% if part.description %}
+                        <p>{{ part.description }}</p>
+                    {% endif %}
+                    <div>
+                        <a href="{% url 'update-course-part' course.id part.id %}">[Редактировать]</a> |
+                        <form method="post" action="{% url 'delete-course-part' course.id part.id %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" onclick="return confirm('Вы уверены, что хотите удалить эту часть?');" style="background: none; border: none; color: red; text-decoration: underline; cursor: pointer; padding: 0;">[Удалить]</button>
+                        </form> |
+                        <a href="{% url 'create-course-topic' course.id part.id %}">[Добавить тему]</a>
+                    </div>
+                    <ul>
+                        {% for topic in part.topics.all %}
+                            <li>
+                                <strong>{{ topic.title }}</strong>
+                                {% if topic.description %}
+                                    <p>{{ topic.description }}</p>
+                                {% endif %}
+                                <div>
+                                    <a href="{% url 'update-course-topic' course.id part.id topic.id %}">[Редактировать]</a> |
+                                    <form method="post" action="{% url 'delete-course-topic' course.id part.id topic.id %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" onclick="return confirm('Вы уверены, что хотите удалить эту тему?');" style="background: none; border: none; color: red; text-decoration: underline; cursor: pointer; padding: 0;">[Удалить]</button>
+                                    </form> |
+                                    <a href="{% url 'create-topic-document' course.id part.id topic.id %}">[Загрузить документ]</a>
+                                </div>
+                                <ul>
+                                    {% for document in topic.documents.all %}
+                                        <li>
+                                            <a href="{{ document.file.url }}" target="_blank">{{ document.name }}</a>
+                                            <div>
+                                                <a href="{% url 'update-topic-document' course.id part.id topic.id document.id %}">[Редактировать]</a> |
+                                                <form method="post" action="{% url 'delete-topic-document' course.id part.id topic.id document.id %}" style="display: inline;">
+                                                    {% csrf_token %}
+                                                    <button type="submit" onclick="return confirm('Вы уверены, что хотите удалить этот документ?');" style="background: none; border: none; color: red; text-decoration: underline; cursor: pointer; padding: 0;">[Удалить]</button>
+                                                </form>
+                                            </div>
+                                        </li>
+                                    {% empty %}
+                                        <li><em>Нет документов</em></li>
+                                    {% endfor %}
+                                </ul>
+                            </li>
+                        {% empty %}
+                            <li><em>Нет тем</em></li>
+                        {% endfor %}
+                    </ul>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p><em>Нет частей. <a href="{% url 'create-course-part' course.id %}">Добавить часть</a></em></p>
+    {% endif %}
+{% endblock %}

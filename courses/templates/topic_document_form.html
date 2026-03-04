@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}{% if is_edit %}Редактировать документ{% else %}Загрузить документ{% endif %}{% endblock %}
+
+{% block content %}
+    <h1>{% if is_edit %}Редактировать документ{% else %}Загрузить документ{% endif %}</h1>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+        {% if is_edit and document %}
+            <p><small>Текущий файл: <a href="{{ document.file.url }}" target="_blank">{{ document.name }}</a></small></p>
+        {% endif %}
+        <button type="submit">{% if is_edit %}Сохранить{% else %}Загрузить{% endif %}</button>
+        <a href="{% url 'course-details' course_id %}">Отмена</a>
+    </form>
+{% endblock %}
+
