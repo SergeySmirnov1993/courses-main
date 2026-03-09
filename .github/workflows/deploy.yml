@@ -1,0 +1,105 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ dev, main ]
+
+jobs:
+  lint:
+    name: Lint(flake8, isort)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+      
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+      
+      - name: Run flake8
+        run: flake8 .
+      
+      - name: Run isort
+        run: isort . --check-only --diff
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+      
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      
+      - name: Run tests
+        run: python manage.py test
+        env:
+          DJANGO_SETTINGS_MODULE: src.settings
+          SECRET_KEY: test-secret-key
+  
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: test
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'develop' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create .env from secrets
+        env:
+          ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
+          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+          DJANGO_DEBUG: ${{ secrets.DJANGO_DEBUG }}
+          DJANGO_ALLOWED_HOSTS: ${{ secrets.DJANGO_ALLOWED_HOSTS }}
+          CSRF_TRUSTED_ORIGINS: ${{ secrets.CSRF_TRUSTED_ORIGINS }}
+        run: |
+          # Пишем .env через Python, чтобы корректно обработать спецсимволы в паролях
+          python3 << 'PYEOF'
+          import os
+          vars_list = [
+              'ENVIRONMENT', 'POSTGRES_DB', 'POSTGRES_USER', 'POSTGRES_PASSWORD',
+              'POSTGRES_PORT', 'DJANGO_SECRET_KEY', 'DJANGO_DEBUG',
+              'DJANGO_ALLOWED_HOSTS', 'CSRF_TRUSTED_ORIGINS'
+          ]
+          with open('.env', 'w') as f:
+              for v in vars_list:
+                  val = os.environ.get(v, '')
+                  f.write(f'{v}={val}\n')
+          PYEOF
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Deploy via rsync + SSH
+        run: |
+          # Синхронизируем проект (исключая .git, кэш, .env — его копируем отдельно)
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            --exclude '.git' --exclude '__pycache__' --exclude '*.pyc' \
+            --exclude '.env' \
+            ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.DEPLOY_PATH || '/app/courses' }}/
+
+          # Копируем .env с секретами
+          rsync -avz -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            .env ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.DEPLOY_PATH || '/app/courses' }}/.env
+
+          # На сервере: сборка образа web и запуск всех контейнеров (profile prod = nginx + certbot)
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "cd ${{ secrets.DEPLOY_PATH || '/app/courses' }} && docker compose --profile prod build --no-cache web && docker compose --profile prod up -d"

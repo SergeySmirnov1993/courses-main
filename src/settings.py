@@ -10,7 +10,21 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
+
+
+def _env(key: str, default: str = "") -> str:
+    return os.environ.get(key, default)
+
+
+def _env_bool(key: str, default: bool = False) -> bool:
+    val = _env(key, str(default))
+    return val.lower() in ['true', '1', 'yes']
+
+
+def _env_list(key: str, default: str = "") -> list[str]:
+    return [x.strip() for x in _env(key, default).split(',') if x.strip()]
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +34,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-b42s@jkx=$e37aob!4#ufl&5mz^c($4s@uazokqw1rm3&0bg58'
+SECRET_KEY = _env('DJANGO_SECRET_KEY', 'django-insecure-b42s@jkx=$e37aob!4#ufl&5mz^c($4s@uazokqw1rm3&0bg58')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = _env_bool('DJANGO_DEBUG', True)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = _env_list('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0')
+CSRF_TRUSTED_ORIGINS = _env_list('DJANGO_CSRF_TRUSTED_ORIGINS', 'http://localhost:8000,http://127.0.0.1:8000,http://0.0.0.0:8000')
 
 
 # Application definition
@@ -73,12 +88,25 @@ WSGI_APPLICATION = 'src.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+
+if _env("POSTGRES_HOST"):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': _env('POSTGRES_DB', 'courses_db'),
+            'USER': _env('POSTGRES_USER', 'courses_user'),
+            'PASSWORD': _env('POSTGRES_PASSWORD', 'courses_password'),
+            'HOST': _env('POSTGRES_HOST', 'db'),
+            'PORT': _env('POSTGRES_PORT', 5432),
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation

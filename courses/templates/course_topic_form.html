@@ -4,11 +4,15 @@
 
 {% block content %}
     <h1>{% if is_edit %}Редактировать тему курса{% else %}Создать тему курса{% endif %}</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Сохранить</button>
-        <a href="{% url 'course-details' course_id %}">Отмена</a>
-    </form>
+    <div class="form-card">
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <div class="btn-group">
+                <button type="submit" class="btn btn--primary">Сохранить</button>
+                <a href="{% url 'course-details' course_id %}" class="btn btn--secondary">Отмена</a>
+            </div>
+        </form>
+    </div>
 {% endblock %}
 
