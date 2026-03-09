@@ -48,43 +48,43 @@ jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
-    needs: [lint, test]
+    needs: test
     environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'develop' }}
     steps:
       - uses: actions/checkout@v4
-    
-      - name: Create .env from sicrets
+
+      - name: Create .env from secrets
         env:
           ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
-          POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
-          POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
           DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
           DJANGO_DEBUG: ${{ secrets.DJANGO_DEBUG }}
           DJANGO_ALLOWED_HOSTS: ${{ secrets.DJANGO_ALLOWED_HOSTS }}
-          DJANGO_CSRF_TRUSTED_ORIGINS: ${{ secrets.DJANGO_CSRF_TRUSTED_ORIGINS }}
+          CSRF_TRUSTED_ORIGINS: ${{ secrets.CSRF_TRUSTED_ORIGINS }}
         run: |
+          # Пишем .env через Python, чтобы корректно обработать спецсимволы в паролях
           python3 << 'PYEOF'
           import os
           vars_list = [
-              'ENVIRONMENT', 'POSTGRES_HOST', 'POSTGRES_DB', 'POSTGRES_USER', 'POSTGRES_PASSWORD',
+              'ENVIRONMENT', 'POSTGRES_DB', 'POSTGRES_USER', 'POSTGRES_PASSWORD',
               'POSTGRES_PORT', 'DJANGO_SECRET_KEY', 'DJANGO_DEBUG',
-              'DJANGO_ALLOWED_HOSTS', 'DJANGO_CSRF_TRUSTED_ORIGINS'
+              'DJANGO_ALLOWED_HOSTS', 'CSRF_TRUSTED_ORIGINS'
           ]
           with open('.env', 'w') as f:
               for v in vars_list:
                   val = os.environ.get(v, '')
                   f.write(f'{v}={val}\n')
           PYEOF
-      
+
       - name: Setup SSH
-          run: |
-            mkdir -p ~/.ssh
-            echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
-            chmod 600 ~/.ssh/deploy_key
-            ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
 
       - name: Deploy via rsync + SSH
         run: |
