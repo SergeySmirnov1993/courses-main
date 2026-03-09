@@ -49,13 +49,13 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
     needs: [lint, test]
-    environment: ${{ github.ref == 'refs/heads/main' ? 'production' : 'development' }}
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'develop' }}
     steps:
       - uses: actions/checkout@v4
     
       - name: Create .env from sicrets
         env:
-          ENVIRONMENT: ${{ github.ref == 'refs/heads/main' ? 'prod' : 'dev' }}
+          ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
           POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
           POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
